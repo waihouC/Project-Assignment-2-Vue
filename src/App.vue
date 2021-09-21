@@ -9,8 +9,8 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <div class="navbar-nav me-auto mb-2 mb-lg-0">
-            <a class="nav-link active" aria-current="page" href="/" @click="goHome">Home</a>
-            <a class="nav-link" href="#">Create Groupbuy</a>
+            <a class="nav-link active" aria-current="page" href="#" @click="goHome">Home</a>
+            <a class="nav-link" href="#" @click="goCreate">Create Groupbuy</a>
           </div>
           <form class="d-flex">
             <button class="btn btn-outline-light me-2 me-lg-0 mb-2 mb-lg-0" type="button">Log In</button>
@@ -21,6 +21,11 @@
     <main>
       <div class="container-lg" id="page-container">
         <Groupbuy v-if="page == 'home'" />
+        <CreateGroup 
+          v-if="page == 'create'"
+          v-on:cancel-create="goHome"
+          v-on:new-group-created="goHome" 
+        />
       </div>
     </main>
     <footer>
@@ -33,19 +38,24 @@
 
 <script>
 import Groupbuy from './components/Groupbuy';
+import CreateGroup from './components/CreateGroup';
 export default {
   name: "App",
   components: {
-    Groupbuy
+    Groupbuy,
+    CreateGroup
   },
   data: function() {
     return {
-      page: "home"
+      page: "home",
     }
   },
   methods: {
     goHome: function() {
       this.page = "home";
+    },
+    goCreate: function() {
+      this.page = "create";
     }
   }
 };
