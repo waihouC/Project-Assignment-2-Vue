@@ -4,7 +4,7 @@
         </div>
         <div class="border border-secondary rounded-3 p-4 mb-4">
             <h2>Create Groupbuy</h2>
-            <form class="mt-4" v-on:submit.prevent="validateForm">
+            <form class="mt-4" v-on:submit="validateForm">
                 <div class="row">
                     <div class="col-12 col-lg-9">
                         <label class="form-label required-field" for="userName">User Name:</label>
@@ -57,9 +57,10 @@
                             Please enter maximum orders.
                         </div>
                     </div>
-                    <div class="col-12 col-md-3 mt-4">
+                    <div class="col-12 col-md-6 mt-4">
                         <label class="form-label required-field" for="deadline">Deadline:</label>
-                        <datepicker id="deadline" placeholder="Select date" :disabled-dates="state.disabledDates" v-model="deadline"></datepicker>
+                        <datepicker id="deadline" placeholder="Select date" :disabled-dates="state.disabledDates" 
+                            :bootstrap-styling="true" v-model="deadline"></datepicker>
                         <div class="validate-msg" v-if="!deadlineValid && formSubmitted">
                             Please select a date.
                         </div>
@@ -245,8 +246,8 @@
 <script>
 import Datepicker from 'vuejs-datepicker';
 import moment from 'moment';
-import axios from "axios";
-const API_URL = "https://3000-white-carp-u7p83ovg.ws-us15.gitpod.io";
+import axios from 'axios';
+const API_URL = 'https://3000-white-carp-u7p83ovg.ws-us17.gitpod.io';
 export default {
     name: "CreateGroup",
     components: {
@@ -373,9 +374,11 @@ export default {
 }
 
 // control datepicker valid dates
+// disable dates from tomorrow or earlier
 var state = {
     disabledDates: {
-        to: moment().add(1, 'days').toDate()
+        // add 2 days and round down to get full day
+        to: moment().add(2, 'days').startOf('day').toDate()
     }
 };
 </script>
