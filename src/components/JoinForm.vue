@@ -1,49 +1,55 @@
 <template>
-    <div id="formOverlay">
-        <div id="formOverlayContent">
-            <button type="button" class="btn-close" id="btnCloseForm" aria-label="Close" 
-                v-if="mode == 'add'" @click="closeForm"></button>
-            <div>
-                <h2>Tompang to this group</h2>
-                <form @submit="validateForm">
-                    <div class="my-2">
-                        <label class="form-label required-field" for="firstName">First Name:</label>
-                        <input class="form-control" type="text" maxLength="30" id="firstName" 
-                            v-model="firstName" :readonly="mode == 'show'" />
-                        <div class="validate-msg" v-if="!isFirstNameValid && formSubmitted">
-                            Please enter your first name.
+    <transition name="slide-fade">
+        <div id="formOverlay">
+            <div id="formOverlayContent">
+                <button type="button" class="btn-close" id="btnCloseForm" aria-label="Close" 
+                    v-if="mode == 'add'" @click="closeForm">
+                </button>
+                <div>
+                    <h2 v-if="mode == 'add'">Tompang to this group</h2>
+                    <h2 v-if="mode == 'show'">View Member Details</h2>
+                    <form v-on:submit.prevent="validateForm">
+                        <div class="my-2">
+                            <label class="form-label required-field" for="firstName">First Name:</label>
+                            <input class="form-control" type="text" maxLength="30" id="firstName" 
+                                v-model="firstName" :readonly="mode == 'show'" />
+                            <div class="validate-msg" v-if="!isFirstNameValid && formSubmitted">
+                                Please enter your first name.
+                            </div>
                         </div>
-                    </div>
-                    <div class="my-2">
-                        <label class="form-label required-field" for="lastName">Last Name:</label>
-                        <input class="form-control" type="text" maxLength="30" id="lastName" 
-                            v-model="lastName" :readonly="mode == 'show'" />
-                        <div class="validate-msg" v-if="!isLastNameValid && formSubmitted">
-                            Please enter your last name.
+                        <div class="my-2">
+                            <label class="form-label required-field" for="lastName">Last Name:</label>
+                            <input class="form-control" type="text" maxLength="30" id="lastName" 
+                                v-model="lastName" :readonly="mode == 'show'" />
+                            <div class="validate-msg" v-if="!isLastNameValid && formSubmitted">
+                                Please enter your last name.
+                            </div>
                         </div>
-                    </div>
-                    <div class="my-2">
-                        <label class="form-label required-field" for="contact">Contact:</label>
-                        <input class="form-control" type="tel" maxLength="8" id="contact" 
-                            v-model="contact" :readonly="mode == 'show'" />
-                        <div class="validate-msg" v-if="!isContactValid && formSubmitted">
-                            {{validateContactMsg}}
+                        <div class="my-2">
+                            <label class="form-label required-field" for="contact">Contact:</label>
+                            <input class="form-control" type="tel" maxLength="8" id="contact" 
+                                v-model="contact" :readonly="mode == 'show'" />
+                            <div class="validate-msg" v-if="!isContactValid && formSubmitted">
+                                {{ validateContactMsg }}
+                            </div>
                         </div>
-                    </div>
-                    <div class="d-grid col-6 mx-auto mt-5">
-                        <button class="btn btn-secondary" type="submit" v-if="mode == 'add'">Submit</button>
-                        <button class="btn btn-secondary" type="button" 
-                            v-if="mode == 'show'" @click="closeForm">OK</button>
-                    </div>
-                </form>
+                        <div class="d-grid col-6 mx-auto mt-5">
+                            <button class="btn btn-secondary" type="submit" v-if="mode == 'add'">
+                                Submit
+                            </button>
+                            <button class="btn btn-secondary" type="button" 
+                                v-if="mode == 'show'" @click="closeForm">OK</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>    
+    </transition>    
 </template>
 
 <script>
 import axios from 'axios';
-const API_URL = 'https://3000-white-carp-u7p83ovg.ws-us17.gitpod.io';
+const API_URL = 'https://3000-white-carp-u7p83ovg.ws-us18.gitpod.io';
 export default {
     name: "JoinForm",
     data: function() {
@@ -72,7 +78,7 @@ export default {
             if (!this.contact) {
                 this.validateContactMsg = "Please enter your contact.";
                 this.isContactValid = false;
-            } else if (!this.isValidPhoneNumber(this.contact)) {
+            } else if (!this.isValidPhoneNumber) {
                 this.validateContactMsg = "Contact is not valid.";
                 this.isContactValid = false;
             } else {
@@ -105,10 +111,13 @@ export default {
                 }
             }
         },
-        isValidPhoneNumber: function(n) {
+        
+    },
+    computed: {
+        isValidPhoneNumber: function() {
             var regex = /^\d{8}$/;
-            return regex.test(n);
-        },
+            return regex.test(this.contact);
+        }
     }
 }
 </script>
@@ -145,7 +154,7 @@ export default {
 
 h2 {
     margin: 22px 0px;
-    font-family: "MV Boli", cursive;
+    font-family: "Comic Sans MS", cursive;
 }
 
 .required-field::after {
@@ -164,5 +173,14 @@ input:focus {
     color: red;
     font-size: .875em;
     margin-top: .2em;
+}
+
+.slide-fade-enter-active, .slide-fade-leave-active {
+    transition: all .8s;
+}
+
+.slide-fade-enter, .slide-fade-leave-to {
+    transform: translateY(20px);
+    opacity: 0;
 }
 </style>

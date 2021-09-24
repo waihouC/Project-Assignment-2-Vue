@@ -2,15 +2,20 @@
   <div>
     <div class="overlay">
       <div class="container-lg">
-        <form class="p-4">
-          <div class="input-group">
-            <input type="search" class="form-control rounded-2" placeholder="Search here..."
-              id="search-box" aria-label="Search" aria-describedby="search-button" v-model="queryTerm" />
-            <div class="input-group-btn">
-              <button class="btn btn-secondary btn-sm" type="submit" id="search-button" @click="performSearch">
-                <img src="../assets/img/search-symbol.png" />
-              </button>
+        <form class="p-4" v-on:submit.prevent="performSearch">
+          <div class="d-flex">
+            <div class="input-group me-3">
+              <input type="search" class="form-control rounded-2" placeholder="Search here..."
+                id="search-box" aria-label="Search" aria-describedby="search-button" v-model="queryTerm" />
+              <div class="input-group-btn">
+                <button class="btn btn-secondary btn-sm" type="submit" id="search-button">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
             </div>
+            <button class="btn btn-outline-dark btn-sm" type="submit" id="refresh-button" @click="refreshSearch">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
           </div>
           <div class="btn-group mt-2 mt-md-3" role="group" aria-label="product tags toggle">
             <div class="form-check mx-2">
@@ -58,7 +63,7 @@
     </div>
     <div class="border border-secondary rounded-3 p-4 pt-2 my-4">
       <div class="mb-3">
-        <span class="fw-bold">{{ this.groupbuys.length }}</span> available groups:
+        <span class="fw-bold">{{ this.groupbuys.length }}</span> groups available:
       </div>
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         <div class="col" v-for="g in groupbuys" v-bind:key="g._id">
@@ -88,10 +93,10 @@
                 <span class="fw-bold">Deadline:</span> {{ g.deadline | formatDate }}
               </li>
               <li class="list-group-item" v-bind:class="{'d-none': g.tags.length == 0}">
-                <button class="btn btn-dark btn-sm me-2 mb-2 btn-tag" type="button"
-                  v-for="(t, index) in g.tags" v-bind:key="index" disabled>
+                <span class="badge bg-secondary rounded-pill me-2 mb-2 p-2"
+                  v-for="(t, index) in g.tags" v-bind:key="index">
                   {{ t }}
-                </button>
+                </span>
               </li>
             </ul>
             <div class="card-footer d-flex justify-content-between bg-gray400">
@@ -103,7 +108,7 @@
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMemberList">
                   <li>
-                    <a class="dropdown-item lh-1 dropdown-option" href="#" 
+                    <a class="dropdown-item lh-1 dropdown-option" 
                       v-for="m in g.groupMembers" 
                       v-bind:key="m._id"
                       v-on:click="showMember(m._id)">
@@ -112,35 +117,55 @@
                   </li>
                 </ul>
               </div>
-              <button class="btn btn-light btn-outline-dark btn-sm" type="button" 
-                v-bind:class="{disabled: g.groupMembers.length >= g.maxOrders}" 
-                @click="showJoinForm(g._id)">Join
-              </button>
+              <div id="btn-menu">
+                <button class="btn btn-success btn-sm pt-0 ms-2" type="button" 
+                  v-if="g.groupMembers.length < g.maxOrders" @click="showJoinForm(g._id)">
+                  <i class="bi bi-cart-check"></i>
+                </button>
+                <button type="button" class="btn btn-primary btn-sm pt-0 ms-2" 
+                  v-if="userLoggedIn" @click="editGroup(g._id)">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button type="button" class="btn btn-danger btn-sm pt-0 ms-2" 
+                  v-if="userLoggedIn" @click="deleteGroup(g._id, g.groupName)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
     <JoinForm
+      :mode="joinMode"
+      :groupId="groupId"
+      :selectedMember="memberDetails"
       v-if="showForm"
-      v-bind:mode="joinMode"
-      v-bind:groupId="groupId"
-      v-bind:selectedMember="memberDetails"
       v-on:close-join-form="closeJoinForm"
-      v-on:new-member-added="closeJoinForm"
+      v-on:new-member-added="onMemberAdded"
       v-on:error="joinError"
+    />
+    <DeleteGroup 
+      :groupId="groupId"
+      :groupName="groupToDelete"
+      v-if="showDelete"
+      v-on:close-delete-modal="closeDeleteModal"
+      v-on:group-deleted="onGroupDeleted"
+      v-on:error="deleteError"
     />
   </div>
 </template>
 
 <script>
 import JoinForm from './JoinForm';
+import DeleteGroup from './DeleteGroup';
 import axios from 'axios';
-const API_URL = 'https://3000-white-carp-u7p83ovg.ws-us17.gitpod.io';
+const API_URL = 'https://3000-white-carp-u7p83ovg.ws-us18.gitpod.io';
 export default {
   name: "Groupbuy",
   components: {
-    JoinForm
+    JoinForm,
+    DeleteGroup
   },
   data: function() {
     return {
@@ -152,9 +177,12 @@ export default {
       showForm: false,
       joinMode: "add",
       groupId: "",
-      memberDetails: {}
+      memberDetails: {},
+      showDelete: false,
+      groupToDelete: ""
     };
   },
+  props: [ "userLoggedIn" ],
   mounted: async function() {
     let response = await axios.get(API_URL + '/groupbuy');
     this.groupbuys = response.data;
@@ -195,6 +223,12 @@ export default {
 
       this.groupbuys = response.data;
     },
+    refreshSearch: function() {
+      this.queryTerm = "";
+      this.queryType = "groupName";
+      this.queryCategory = "";
+      this.queryPrice = 0;
+    },
     showJoinForm: function(id) {
       this.showForm = true;
       this.joinMode = "add";
@@ -207,9 +241,16 @@ export default {
     },
     closeJoinForm: function() {
       this.showForm = false;
+      this.groupId = "";
+    },
+    onMemberAdded: function() {
+      this.showForm = false;
+      this.groupId = "";
+      this.$emit("force-rerender");
     },
     joinError: function() {
       this.showForm = false;
+      this.groupId = "";
       alert("Sorry. Error joining group. Please try again later.");
     },
     showMember: async function(id) {
@@ -222,6 +263,28 @@ export default {
       
       this.showForm = true;
       this.joinMode = "show";
+    },
+    editGroup: function(id) {
+      this.$emit("edit-group", id);
+    },
+    deleteGroup: function(id, name) {
+      this.showDelete = true;
+      this.groupId = id;
+      this.groupToDelete = name;
+    },
+    closeDeleteModal: function() {
+      this.showDelete = false;
+      this.groupId = "";
+    },
+    onGroupDeleted: function() {
+      this.showDelete = false;
+      this.groupId = "";
+      this.$emit("force-rerender");
+    },
+    deleteError: function() {
+      this.showDelete = false;
+      this.groupId = "";
+      alert("Sorry. Error deleting group. Please try again later.");
     }
   }
 };
@@ -252,15 +315,12 @@ export default {
 }
 
 #search-button {
-  padding-top: 3px !important;
+  top: -3px;
+  left: 2px;
 }
 
 .bg-gray400 {
   background-color: #ced4da;
-}
-
-.btn-tag {
-    border-radius: 15px;
 }
 
 .dropdown-option {
@@ -273,5 +333,9 @@ export default {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+i {
+  font-size: 1.1rem;
 }
 </style>

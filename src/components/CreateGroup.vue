@@ -3,12 +3,14 @@
         <div id="div-margin">
         </div>
         <div class="border border-secondary rounded-3 p-4 mb-4">
-            <h2>Create Groupbuy</h2>
-            <form class="mt-4" v-on:submit="validateForm">
+            <h2 v-if="groupId == ''">Create Groupbuy</h2>
+            <h2 v-else>Edit Groupbuy</h2>
+            <form class="mt-4" v-on:submit.prevent="validateForm">
                 <div class="row">
                     <div class="col-12 col-lg-9">
                         <label class="form-label required-field" for="userName">User Name:</label>
-                        <input class="form-control" type="text" id="userName" v-model="userName" />
+                        <input class="form-control" type="text" id="userName" v-model="userName" 
+                            :readonly="groupId != ''" />
                         <div class="validate-msg" v-if="!userNameValid && formSubmitted">
                             Please enter your username.
                         </div>
@@ -17,7 +19,7 @@
                         <label class="form-label required-field" for="contact">Contact:</label>
                         <input class="form-control" type="tel" maxLength="8" id="contact" v-model="contact" />
                         <div class="validate-msg" v-if="!contactValid && formSubmitted">
-                            {{validateContactMsg}}
+                            {{ validateContactMsg }}
                         </div>
                     </div>
                 </div>
@@ -60,7 +62,8 @@
                     <div class="col-12 col-md-6 mt-4">
                         <label class="form-label required-field" for="deadline">Deadline:</label>
                         <datepicker id="deadline" placeholder="Select date" :disabled-dates="state.disabledDates" 
-                            :bootstrap-styling="true" v-model="deadline"></datepicker>
+                            :bootstrap-styling="true" v-model="deadline">
+                        </datepicker>
                         <div class="validate-msg" v-if="!deadlineValid && formSubmitted">
                             Please select a date.
                         </div>
@@ -234,7 +237,7 @@
                 </div>
                 <div class="row">
                     <div class="col-12 mt-4 d-flex justify-content-center">
-                        <button type="submit" class="btn btn-success me-4">Submit</button>
+                        <button type="submit" class="btn btn-primary me-4">Submit</button>
                         <button type="button" class="btn btn-secondary" @click="cancelCreate">Cancel</button>
                     </div>
                 </div>
@@ -247,7 +250,7 @@
 import Datepicker from 'vuejs-datepicker';
 import moment from 'moment';
 import axios from 'axios';
-const API_URL = 'https://3000-white-carp-u7p83ovg.ws-us17.gitpod.io';
+const API_URL = 'https://3000-white-carp-u7p83ovg.ws-us18.gitpod.io';
 export default {
     name: "CreateGroup",
     components: {
@@ -279,6 +282,25 @@ export default {
             formValid: false,
             state: state
         };
+    },
+    props: [ "groupId" ],
+    mounted: async function() {
+        if (this.groupId == "") {
+            return;
+        }
+
+        let response = await axios.get(API_URL + '/groupbuy/edit/' + this.groupId);
+        this.userName = response.data.userName;
+        this.contact = response.data.contact;
+        this.groupName = response.data.groupName;
+        this.location = response.data.location;
+        this.priceDollar = parseInt(response.data.price);
+        this.priceCent = Math.round((parseFloat(response.data.price) - parseInt(response.data.price)) * 100);
+        this.maxOrders = response.data.maxOrders;
+        this.deadline = response.data.deadline;
+        this.category = response.data.category;
+        this.tags = response.data.tags;
+        this.description = response.data.description;
     },
     methods: {
         maximumDollar: function(e) {
@@ -320,7 +342,7 @@ export default {
             if (!this.contact) {
                 this.validateContactMsg = "Please enter your contact.";
                 this.contactValid = false;
-            } else if (!this.isValidPhoneNumber(this.contact)) {
+            } else if (!this.isValidPhoneNumber) {
                 this.validateContactMsg = "Contact is not valid.";
                 this.contactValid = false;
             } else {
@@ -331,27 +353,35 @@ export default {
             if (this.userNameValid && this.contactValid && this.groupNameValid &&
                 this.locationValid && this.priceValid && this.ordersValid &&
                 this.categoryValid && this.deadlineValid) {
-                console.log("form validated.");
                 this.formValid = true;
-                this.insertGroup();
+                if (this.groupId) {
+                    console.log("form to update.");
+                    this.updateGroup();
+                } else {
+                    console.log("form to create.");
+                    this.insertGroup();
+                }
             }
 
             e.preventDefault();
         },
-        isValidPhoneNumber: function(n) {
-            var regex = /^\d{8}$/;
-            return regex.test(n);
-        },
         cancelCreate: function() {
-            this.$emit("cancel-create");
+            this.$emit("go-to-home");
         },
         insertGroup: async function() {
             if (this.formValid) {
                 console.log("form is valid.");
+                // recheck null value price
+                if (!this.priceDollar) {
+                    this.priceDollar = 0;
+                }
+                if (!this.priceCent) {
+                    this.priceCent = 0;
+                }
                 let result = await axios.post(API_URL + '/groupbuy/create', {
                     userName: this.userName,
                     groupName: this.groupName,
-                    price: this.priceDollar + (this.priceCent / 100),
+                    price: parseFloat(this.priceDollar + (this.priceCent / 100)),
                     location: this.location,
                     deadline: this.deadline,
                     contact: this.contact,
@@ -363,12 +393,49 @@ export default {
 
                 if (result.status == 200) {
                     console.log("200: success");
-                    this.$emit("new-group-created");
+                    this.$emit("go-to-home");
                 } else {
-                    // redirect error page?
                     console.log(result);
+                    this.$emit("go-to-error");
                 }
             }
+        },
+        updateGroup: async function() {
+            if (this.formValid) {
+                console.log("form is valid.");
+                // recheck null value price
+                if (!this.priceDollar) {
+                    this.priceDollar = 0;
+                }
+                if (!this.priceCent) {
+                    this.priceCent = 0;
+                }
+                let result = await axios.patch(API_URL + '/groupbuy/edit/' + this.groupId, {
+                    groupName: this.groupName,
+                    price: parseFloat(this.priceDollar + (this.priceCent / 100)),
+                    location: this.location,
+                    deadline: this.deadline,
+                    contact: this.contact,
+                    maxOrders: this.maxOrders,
+                    description: this.description,
+                    category: this.category,
+                    tags: this.tags
+                });
+
+                if (result.status == 200) {
+                    console.log("200: success");
+                    this.$emit("go-to-home");
+                } else {
+                    console.log(result);
+                    this.$emit("go-to-error");
+                }
+            }
+        }
+    },
+    computed: {
+        isValidPhoneNumber: function() {
+            var regex = /^\d{8}$/;
+            return regex.test(this.contact);
         }
     }
 }
