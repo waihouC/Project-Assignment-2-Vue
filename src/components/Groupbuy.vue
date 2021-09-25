@@ -160,7 +160,7 @@
 import JoinForm from './JoinForm';
 import DeleteGroup from './DeleteGroup';
 import axios from 'axios';
-const API_URL = 'https://3000-white-carp-u7p83ovg.ws-us18.gitpod.io';
+const API_URL = 'https://project-assignment-2-express.herokuapp.com';
 export default {
   name: "Groupbuy",
   components: {
