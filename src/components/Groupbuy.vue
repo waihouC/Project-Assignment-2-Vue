@@ -118,15 +118,15 @@
                 </ul>
               </div>
               <div id="btn-menu">
-                <button class="btn btn-success btn-sm pt-0 ms-2" type="button" 
+                <button class="btn btn-success btn-sm pt-0 ms-2" type="button" title="Join Group"
                   v-if="g.groupMembers.length < g.maxOrders" @click="showJoinForm(g._id)">
                   <i class="bi bi-cart-check"></i>
                 </button>
-                <button type="button" class="btn btn-primary btn-sm pt-0 ms-2" 
+                <button type="button" class="btn btn-primary btn-sm pt-0 ms-2" title="Edit Group"
                   v-if="userLoggedIn" @click="editGroup(g._id)">
                   <i class="bi bi-pencil-square"></i>
                 </button>
-                <button type="button" class="btn btn-danger btn-sm pt-0 ms-2" 
+                <button type="button" class="btn btn-danger btn-sm pt-0 ms-2" title="Delete Group"
                   v-if="userLoggedIn" @click="deleteGroup(g._id, g.groupName)">
                   <i class="bi bi-trash"></i>
                 </button>

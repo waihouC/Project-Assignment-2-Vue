@@ -10,7 +10,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <div class="navbar-nav me-auto mb-2 mb-lg-0">
             <a class="nav-link active" aria-current="page" href="#" @click="goHome">Home</a>
-            <a class="nav-link" href="#" v-if="userLoggedIn" @click="goCreate">Create Groupbuy</a>
+            <a class="nav-link active" href="#" v-if="userLoggedIn" @click="goCreate">Create Groupbuy</a>
           </div>
           <form class="d-flex">
             <button class="btn btn-outline-light me-2 me-lg-0 mb-2 mb-lg-0" type="button" 

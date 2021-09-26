@@ -72,7 +72,8 @@
                 <div class="row">
                     <div class="col-12 col-md-3 mt-4">
                         <label class="form-label required-field" for="category">Category:</label>
-                        <select class="form-select" aria-label="Category" id="category" v-model="category">
+                        <select class="form-select" aria-label="Category" id="category" 
+                            v-model="category" @change="uncheckAllTags">
                             <option value="">Choose a category</option>
                             <option value="Food &amp; Drinks">Food &amp; Drinks</option>
                             <option value="Household">Household</option>
@@ -303,6 +304,9 @@ export default {
         this.description = response.data.description;
     },
     methods: {
+        uncheckAllTags: function() {
+            this.tags = [];
+        },
         maximumDollar: function(e) {
             let value = e.target.value;
             if (value.length > 4) {
